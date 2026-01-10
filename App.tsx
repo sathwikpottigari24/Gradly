@@ -8,7 +8,7 @@ import QuizZone from './pages/QuizZone';
 import ImageAnalysis from './pages/ImageAnalysis';
 import { ViewType, ExamUpdate } from './types';
 import { getExamUpdates, generateShortNotes, solveDoubt } from './services/geminiService';
-import { Loader2, FileText, ShieldQuestion, Key, AlertCircle, Calendar, Clock, Info } from 'lucide-react';
+import { Loader2, FileText, ShieldQuestion, Calendar, Clock, Info, RefreshCw } from 'lucide-react';
 import FormattedContent from './components/FormattedContent';
 
 const App: React.FC = () => {
@@ -17,31 +17,13 @@ const App: React.FC = () => {
   const [shortNotes, setShortNotes] = useState('');
   const [doubtResponse, setDoubtResponse] = useState('');
   const [loading, setLoading] = useState(false);
-  const [hasKey, setHasKey] = useState<boolean | null>(null);
-  const [globalError, setGlobalError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const checkKey = async () => {
-      // @ts-ignore
-      const exists = await window.aistudio.hasSelectedApiKey();
-      setHasKey(exists);
-    };
-    checkKey();
-  }, []);
-
-  const handleSelectKey = async () => {
-    // @ts-ignore
-    await window.aistudio.openSelectKey();
-    setHasKey(true);
-    setGlobalError(null);
-  };
+  const [error, setError] = useState<string | null>(null);
 
   const handleApiError = useCallback((err: any) => {
-    const msg = err.message || JSON.stringify(err);
-    if (msg.includes("403") || msg.includes("permission") || msg.includes("404")) {
-      setGlobalError("API Access Required. Please select a valid API key.");
-      setHasKey(false);
-    }
+    console.error("API Error:", err);
+    setError("Connection to the AI study engine failed. Please try again in a moment.");
+    // Auto-clear error after 5 seconds
+    setTimeout(() => setError(null), 5000);
   }, []);
 
   useEffect(() => {
@@ -70,22 +52,22 @@ const App: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-2xl font-bold text-gray-800">Live Exam Tracking</h3>
-                <p className="text-gray-500 text-sm">Real-time application dates and schedules powered by Google Search.</p>
+                <p className="text-gray-500 text-sm">Real-time dates for National, Private, and NIAT exams.</p>
               </div>
               <button 
                 onClick={() => { setExamUpdates(null); setLoading(true); }} 
                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 title="Refresh Updates"
               >
-                <Loader2 className={loading ? "animate-spin" : ""} size={20} />
+                <RefreshCw className={loading ? "animate-spin" : ""} size={20} />
               </button>
             </div>
 
             {loading ? (
               <div className="bg-white p-12 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center">
                 <Loader2 className="animate-spin text-blue-600 mb-4" size={40} />
-                <p className="text-gray-700 font-bold">Scanning National Exam Database...</p>
-                <p className="text-gray-400 text-sm mt-1">Grounding with real-time web intelligence</p>
+                <p className="text-gray-700 font-bold">Scanning Global Exam Database...</p>
+                <p className="text-gray-400 text-sm mt-1">Fetching latest notification cycles...</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -93,7 +75,7 @@ const App: React.FC = () => {
                   <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group border-l-4 border-l-blue-500">
                     <div className="flex justify-between items-start mb-4">
                        <h4 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{exam.name}</h4>
-                       <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-tighter">Verified</span>
+                       <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-tighter">Live</span>
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
@@ -103,7 +85,7 @@ const App: React.FC = () => {
                       </div>
                       <div className="flex items-center text-sm text-gray-600 bg-orange-50 p-2 rounded-lg">
                         <Clock size={16} className="text-orange-500 mr-2" />
-                        <span className="font-medium mr-2">Last Date:</span>
+                        <span className="font-medium mr-2">Application Deadline:</span>
                         <span className="text-orange-900 font-bold">{exam.deadline}</span>
                       </div>
                     </div>
@@ -114,7 +96,7 @@ const App: React.FC = () => {
             
             <div className="flex items-center p-4 bg-blue-50 rounded-xl text-xs text-blue-700 border border-blue-100">
               <Info size={16} className="mr-3 flex-shrink-0" />
-              <p>Dates are retrieved from official portals. Always verify with the final notification brochure before applying.</p>
+              <p>Updates are sourced automatically. Cross-check with official brochures for final eligibility and fees.</p>
             </div>
           </div>
         );
@@ -160,20 +142,19 @@ const App: React.FC = () => {
     }
   };
 
-  if (hasKey === false || globalError) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 text-center">
-        <div className="bg-white p-10 rounded-3xl border border-gray-200 shadow-2xl max-w-md w-full">
-          {globalError ? <AlertCircle size={48} className="mx-auto text-red-500 mb-6"/> : <Key size={48} className="mx-auto text-blue-600 mb-6"/>}
-          <h1 className="text-2xl font-bold mb-4">{globalError ? "Access Required" : "Setup Required"}</h1>
-          <p className="text-gray-600 mb-8">{globalError || "Gradly requires a Gemini API key to provide academic assistance. You can use your own key from the AI Studio."}</p>
-          <button onClick={handleSelectKey} className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all">Select API Key</button>
+  return (
+    <Layout currentView={currentView} setView={setCurrentView}>
+      {error && (
+        <div className="fixed top-20 right-8 z-50 animate-in slide-in-from-right duration-300">
+          <div className="bg-red-600 text-white px-6 py-3 rounded-xl shadow-xl flex items-center">
+            <Info size={18} className="mr-3" />
+            <span className="text-sm font-bold">{error}</span>
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  return <Layout currentView={currentView} setView={setCurrentView}>{renderContent()}</Layout>;
+      )}
+      {renderContent()}
+    </Layout>
+  );
 };
 
 export default App;
