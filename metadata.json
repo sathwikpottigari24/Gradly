@@ -1,0 +1,7 @@
+{
+  "name": "Gradly - One-Stop Exam Portal",
+  "description": "An intelligent AI-driven learning ecosystem for JEE Main, Advanced, and state competitive exams featuring real-time updates, mind maps, note generation, and 24/7 tutoring.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
