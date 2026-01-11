@@ -3,7 +3,7 @@ import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { QuizQuestion, MindMapData, ExamUpdate } from "../types";
 
 // Always create a new instance right before use to get latest API key
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 const SCHEMA_MINDMAP = {
   type: Type.OBJECT,
